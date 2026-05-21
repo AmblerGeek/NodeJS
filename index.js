@@ -1,35 +1,59 @@
-const http = require('http');
+require('dotenv').config();
+
 const fs = require('fs');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const config = require('./src/config/config');
+// const router = require('./src/routes/router');
 
-const data = fs.readFileSync(`${__dirname}/data.json`, 'utf-8');
-const productData = JSON.parse(data);
+const app = express();
+app.use(bodyParser.json());
+app.use(express.json());
+app.use(cors());
 
-const server = http.createServer((request, response) => {
-    const path = request.url;
-    console.log(path);
-    
-    if(path === '/' || path === '/overview') {
-        response.end('Overview');
-    } else if (path === '/product') {
-        response.end('Product');
-    } else if (path === '/api') {
-        response.writeHead(200, {
-            'Content-type': 'application/json'
+// app.use(router);
+
+const tours_data = fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`);
+const tours = JSON.parse(tours_data);
+
+app.get('/api/v1/tours', (request, response) => {
+
+    response
+    .status(200)
+    .json({
+        status: 'success',
+        data: {
+            tours
+        }
+    });
+});
+
+app.post('/api/v1/tours', (request, response) => {
+    console.log(request.body);
+    response
+    .status(200)
+    .send("POST");
+});
+
+
+/*
+app.get('/', (request, response) => {
+    response
+    .status(200)
+    .json({
+        message: "Hello World!",
+        app: "NodeJS"
         });
+});
 
-        response.end(data);
-    } else {
-        response.writeHead(404, {
-            'Content-type': 'text/html',
-            'Customer-Header': 'Hello World!'
-        });
-        response.end('<h1>Page not found</h1>');
-    }
+app.post('/', (request, response) => {
+    response
+    .send("Post end-point");
+});
+*/
 
-    console.log(request.url);
-    
-})
-
-server.listen(8000, '127.0.0.1', () => {
-    console.log('Listening on port 8000');
+const port = config.PORT || 5000;
+app.listen(port, () => {
+    console.log(`Listening on port ${port}!`);
 });
