@@ -11,6 +11,15 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(cors());
+app.use((request, response, next) => {
+    console.log('Hello from middleware');
+    next();
+});
+app.use((request, response, next) => {
+    request.requestTime = new Date().toISOString();
+    console.log('Hello from middleware');
+    next();
+});
 
 // app.use(router);
 
@@ -18,10 +27,13 @@ const tours_data = fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json
 const tours = JSON.parse(tours_data);
 
 const getAllTours = (request, response) => {
+    console.log(request.requestTime);
+
     response
     .status(200)
     .json({
         status: 'success',
+        requestedAt: request.requestTime,
         results: tours.length,
         data: {
             tours
@@ -84,10 +96,23 @@ const updateTour = (request, response) => {
     }
 };
 
-// app.get('/api/v1/tours', getAllTours);
-// app.get('/api/v1/tours/:id', getTour);
-// app.post('/api/v1/tours', createTour);
-// app.patch('/api/v1/tours/:id', updateTour);
+const deleteTour = (request, response) => {
+    const id = Number(request.params.id);
+    const tour = tours.find(element => element.id == id);
+    if(tour) {
+        response
+        .status(200)
+        .json({
+            status: 'success',
+            data: null
+        });
+    } else {
+        response.status(404).json({
+            status: 'fail',
+            message: 'Invalid ID'
+        });
+    }
+};
 
 app.route('/api/v1/tours')
     .get(getAllTours)
@@ -95,7 +120,8 @@ app.route('/api/v1/tours')
 
 app.route('/api/v1/tours/:id')
     .get(getTour)
-    .patch(updateTour);
+    .patch(updateTour)
+    .delete(deleteTour);
 
 const port = config.PORT || 5000;
 app.listen(port, () => {
